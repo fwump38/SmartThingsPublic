@@ -137,6 +137,21 @@ def modeTime() {
     }
 }
 
+def installed() {
+    initialize()
+}
+
+def updated() {
+    unsubscribe()
+    unschedule()
+    initialize()
+}
+
+
+def initialize() {
+    state.currentMode = location.mode in modesX ? location.mode : modesX[0]
+}
+
 
 
 
