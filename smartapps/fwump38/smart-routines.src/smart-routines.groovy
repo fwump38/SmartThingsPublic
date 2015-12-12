@@ -247,3 +247,4 @@ private timeIntervalLabel() {
     else if (starting && endingX == "Sunrise") result = hhmm(starting) + " to Sunrise" + offset(endSunriseOffset)
     else if (starting && endingX == "Sunset") result = hhmm(starting) + " to Sunset" + offset(endSunsetOffset)
     else if (starting && ending) result = hhmm(starting) + " to " + hhmm(ending, "h:mm a z")
+}
