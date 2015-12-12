@@ -55,7 +55,7 @@ def setModeRoutine(thisMode, modeRoutine) {
         // sort them alphabetically
         actions.sort()
     }
-    def result = input modeRoutine, "enum", multiple: false, title: "Routine for $thisMode", required: true options: actions
+    def result = input modeRoutine, "enum", multiple: false, title: "Routine for $thisMode", required: true, options: actions
 }
 
 def setModeStatus(thisMode, modeStatus) {
