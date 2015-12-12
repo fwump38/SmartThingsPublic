@@ -41,14 +41,14 @@ def selectRoutines() {
             input "modesX", "enum", multiple: true, title: "Select mode(s)", submitOnChange: true, options: myModes.sort(), defaultValue: [m]
             def sortModes = modesX
             if(!sortModes) setModeRoutine(m, "routine$m")
-            if(!sortModes) {def statusLabelValue = statusLabel()
+            if(!sortModes) {def statusLabelValue$m = statusLabel()
                 def hrefParams = [thisMode: m, modeStatus: "status$m"]
-                href "setModeStatus", params: hrefParams, title: "Set Status for $m", description: statusLabelValue ?: "Tap to set", state: statusLabelValue ? "complete" : null}
+                href "setModeStatus", params: hrefParams, title: "Set Status for $m", description: statusLabelValue$m ?: "Tap to set", state: statusLabelValue$m ? "complete" : null}
             else sortModes = sortModes.sort()
             sortModes.each {setModeRoutine(it, "routine$it")}
-            sortModes.each {def statusLabelValue = statusLabel()
+            sortModes.each {def statusLabelValue$it = statusLabel()
                 def hrefParams = [thisMode: it, modeStatus: "status$it"]
-                href "setModeStatus", params: hrefParams, title: "Set Status for $it", description: statusLabelValue ?: "Tap to set", state: statusLabelValue ? "complete" : null}
+                href "setModeStatus", params: hrefParams, title: "Set Status for $it", description: statusLabelValue$it ?: "Tap to set", state: statusLabelValue$it ? "complete" : null}
         }
     }
 }
@@ -80,14 +80,14 @@ def selectTimes() {
             location.modes.each {myModes << "$it"}
             input "modesX", "enum", multiple: true, title: "Select mode(s)", submitOnChange: true, options: myModes.sort(), defaultValue: [m]
             def sortModes = modesX
-            if(!sortModes) {def timeLabel = timeIntervalLabel()
+            if(!sortModes) {def timeLabel$m = timeIntervalLabel()
                 def hrefParams = [thisMode: m, modeStart: "modeStart$m", modeEnd: "modeEnd$m"]
-                href "modeTimeRange", params: hrefParams, title: "Set a time range for $m", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null}
+                href "modeTimeRange", params: hrefParams, title: "Set a time range for $m", description: timeLabel$m ?: "Tap to set", state: timeLabel$m ? "complete" : null}
             else sortModes = sortModes.sort()
             sortModes.each {
-                def timeLabel = timeIntervalLabel()
+                def timeLabel$it = timeIntervalLabel()
                 def hrefParams = [thisMode: it, modeStart: "modeStart$it", modeEnd: "modeEnd$it"]
-                href "modeTimeRange", params: hrefParams, title: "Set a time range for $it", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null}
+                href "modeTimeRange", params: hrefParams, title: "Set a time range for $it", description: timeLabel$it ?: "Tap to set", state: timeLabel$it ? "complete" : null}
         }
 
     }
@@ -207,7 +207,7 @@ private hideOptionsSection() {
 private statusLabel() {
     def result = ""
     if (${params?.modeStatus} == "Home") result = "Home"
-    else result = "Away"
+    else if (${params?.modeStatus} == "Away") result = "Away"
 }
 
 private offset(value) {
