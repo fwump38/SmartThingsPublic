@@ -27,8 +27,8 @@ preferences {
     page(name: "selectRoutines")
     page(name: "selectTimes")
     page(name: "selectPeople")
-    page(name: "modeTimeRange")
     page(name: "setModeStatus")
+    page(name: "setModeTimeRange")
 }
 
 def selectRoutines() {
@@ -82,19 +82,19 @@ def selectTimes() {
             def sortModes = modesX
             if(!sortModes) {def timeLabel$m = timeIntervalLabel(m, "modeStart$m", "modeEnd$m")
                 def hrefParams = [thisMode: m, modeStart: "modeStart$m", modeEnd: "modeEnd$m"]
-                href "modeTimeRange", params: hrefParams, title: "Set a time range for $m", description: timeLabel$m ?: "Tap to set", state: timeLabel$m ? "complete" : null}
+                href "setModeTimeRange", params: hrefParams, title: "Set a time range for $m", description: timeLabel$m ?: "Tap to set", state: timeLabel$m ? "complete" : null}
             else sortModes = sortModes.sort()
             sortModes.each {
                 def timeLabel$it = timeIntervalLabel(it, "modeStart$it", "modeEnd$it")
-                def hrefParams = [thisMode: it, modeStart: "modeStart$it", modeEnd: "modeEnd$it"]
-                href "modeTimeRange", params: hrefParams, title: "Set a time range for $it", description: timeLabel$it ?: "Tap to set", state: timeLabel$it ? "complete" : null}
+                def hrefParams2 = [thisMode: it, modeStart: "modeStart$it", modeEnd: "modeEnd$it"]
+                href "setModeTimeRange", params: hrefParams2, title: "Set a time range for $it", description: timeLabel$it ?: "Tap to set", state: timeLabel$it ? "complete" : null}
         }
 
     }
 }
 
-def modeTimeRange(params) {
-    dynamicPage(name:"modeTimeRange",title: "Time Range Selection for ${params?.thisMode}", uninstall: false) {
+def setModeTimeRange(params) {
+    dynamicPage(name:"setModeTimeRange",title: "Time Range Selection for ${params?.thisMode}", uninstall: false) {
         section() {
             input "${params?.modeStart}", "enum", title: "Set a start time for ${params?.thisMode}", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
             if(${params?.modeStart} in [null, "A specific time"]) input "starting", "time", title: "Start time", required: false
