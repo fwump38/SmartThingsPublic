@@ -41,12 +41,14 @@ def selectRoutines() {
             input "modesX", "enum", multiple: true, title: "Select mode(s)", submitOnChange: true, options: myModes.sort(), defaultValue: [m]
             def sortModes = modesX
             if(!sortModes) setModeRoutine(m, "routine$m")
-            if(!sortModes) {def hrefParams = [thisMode: m, modeStatus: "status$m"]
-                href "setModeStatus", params: hrefParams, title: "Set Status for $m", description: statusLabel ?: "Tap to set", state: statuslabel ? "complete" : null}
+            if(!sortModes) {def statusLabelValue = statusLabel()
+                def hrefParams = [thisMode: m, modeStatus: "status$m"]
+                href "setModeStatus", params: hrefParams, title: "Set Status for $m", description: statusLabelValue ?: "Tap to set", state: statusLabelValue ? "complete" : null}
             else sortModes = sortModes.sort()
             sortModes.each {setModeRoutine(it, "routine$it")}
-            sortModes.each {def hrefParams = [thisMode: it, modeStatus: "status$it"]
-                href "setModeStatus", params: hrefParams, title: "Set Status for $it", description: statusLabel ?: "Tap to set", state: statuslabel ? "complete" : null}
+            sortModes.each {def statusLabelValue = statusLabel()
+                def hrefParams = [thisMode: it, modeStatus: "status$it"]
+                href "setModeStatus", params: hrefParams, title: "Set Status for $it", description: statusLabelValue ?: "Tap to set", state: statusLabelValue ? "complete" : null}
         }
     }
 }
