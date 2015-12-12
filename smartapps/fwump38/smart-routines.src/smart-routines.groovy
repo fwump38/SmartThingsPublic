@@ -66,7 +66,7 @@ def setModeRoutine(thisMode, modeRoutine) {
 def setModeStatus(params) {
     dynamicPage(name:"setModeStatus",title: "Set a status for ${params?.thisMode}", uninstall: false) {
         section() {
-            input "modeHomeAway", "enum", title: "Should ${params?.thisMode} be considered as", options: ["Home", "Away"], defaultValue: "Home", submitOnChange: true
+            input "${params?.modeStatus}", "enum", title: "Should ${params?.thisMode} be considered as", options: ["Home", "Away"], defaultValue: "Home", submitOnChange: true
         }
     }
 }
@@ -81,12 +81,12 @@ def selectTimes() {
             input "modesX", "enum", multiple: true, title: "Select mode(s)", submitOnChange: true, options: myModes.sort(), defaultValue: [m]
             def sortModes = modesX
             if(!sortModes) {def timeLabel = timeIntervalLabel()
-                def hrefParams = [thisMode: m, modeTime: "modeTime$m"]
+                def hrefParams = [thisMode: m, modeStart: "modeStart$m", modeEnd: "modeEnd$m"]
                 href "modeTimeRange", params: hrefParams, title: "Set a time range for $m", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null}
             else sortModes = sortModes.sort()
             sortModes.each {
                 def timeLabel = timeIntervalLabel()
-                def hrefParams = [thisMode: it, modeTime: "modeTime$it"]
+                def hrefParams = [thisMode: it, modeStart: "modeStart$it", modeEnd: "modeEnd$it"]
                 href "modeTimeRange", params: hrefParams, title: "Set a time range for $it", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null}
         }
 
@@ -94,22 +94,22 @@ def selectTimes() {
 }
 
 def modeTimeRange(params) {
-    dynamicPage(name:"modeTimeRange",title: "Set a start time for ${params?.thisMode}", uninstall: false) {
+    dynamicPage(name:"modeTimeRange",title: "Time Range Selection for ${params?.thisMode}", uninstall: false) {
         section() {
-            input "startingX", "enum", title: "Starting at", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
-            if(startingX in [null, "A specific time"]) input "starting", "time", title: "Start time", required: false
+            input "${params?.modeStart}", "enum", title: "Set a start time for ${params?.thisMode}", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
+            if(${params?.modeStart} in [null, "A specific time"]) input "starting", "time", title: "Start time", required: false
             else {
-                if(startingX == "Sunrise") input "startSunriseOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
-                else if(startingX == "Sunset") input "startSunsetOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
+                if(${params?.modeStart} == "Sunrise") input "startSunriseOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
+                else if(${params?.modeStart} == "Sunset") input "startSunsetOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
             }
         }
         
         section() {
-            input "endingX", "enum", title: "Set an end time for ${params?.thisMode}", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
-            if(endingX in [null, "A specific time"]) input "ending", "time", title: "End time", required: false
+            input "${params?.modeEnd}", "enum", title: "Set an end time for ${params?.thisMode}", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
+            if(${params?.modeEnd} in [null, "A specific time"]) input "ending", "time", title: "End time", required: false
             else {
-                if(endingX == "Sunrise") input "endSunriseOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
-                else if(endingX == "Sunset") input "endSunsetOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
+                if(${params?.modeEnd} == "Sunrise") input "endSunriseOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
+                else if(${params?.modeEnd} == "Sunset") input "endSunsetOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
             }
         }
     }
@@ -127,28 +127,6 @@ def selectPeople() {
             input "peopleAway", "capability.presenceSensor", multiple: true, title: "If all of these people are away..."
             input "falseAlarmThresholdAway", "decimal", title: "Number of minutes", required: false, defaultValue: 10
             paragraph "If all of these people leave, the mode will change according to the away schedule."
-        }
-    }
-}
-
-def modeTime() {
-    dynamicPage(name:"modeTime",title: "Set a time range for $thisMode", uninstall: false) {
-        section() {
-            input "startingX", "enum", title: "Starting at", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
-            if(startingX in [null, "A specific time"]) input "starting", "time", title: "Start time", required: false
-            else {
-                if(startingX == "Sunrise") input "startSunriseOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
-                else if(startingX == "Sunset") input "startSunsetOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
-            }
-        }
-        
-        section() {
-            input "endingX", "enum", title: "Ending at", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
-            if(endingX in [null, "A specific time"]) input "ending", "time", title: "End time", required: false
-            else {
-                if(endingX == "Sunrise") input "endSunriseOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
-                else if(endingX == "Sunset") input "endSunsetOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
-            }
         }
     }
 }
@@ -195,19 +173,19 @@ private getDaysOk() {
 private getTimeOk() {
     def result = true
     if ((starting && ending) ||
-    (starting && endingX in ["Sunrise", "Sunset"]) ||
-    (startingX in ["Sunrise", "Sunset"] && ending) ||
-    (startingX in ["Sunrise", "Sunset"] && endingX in ["Sunrise", "Sunset"])) {
+    (starting && ${params?.modeEnd} in ["Sunrise", "Sunset"]) ||
+    (${params?.modeStart} in ["Sunrise", "Sunset"] && ending) ||
+    (${params?.modeStart} in ["Sunrise", "Sunset"] && ${params?.modeEnd} in ["Sunrise", "Sunset"])) {
         def currTime = now()
         def start = null
         def stop = null
         def s = getSunriseAndSunset(zipCode: zipCode, sunriseOffset: startSunriseOffset, sunsetOffset: startSunsetOffset)
-        if(startingX == "Sunrise") start = s.sunrise.time
-        else if(startingX == "Sunset") start = s.sunset.time
+        if(${params?.modeStart} == "Sunrise") start = s.sunrise.time
+        else if(${params?.modeStart} == "Sunset") start = s.sunset.time
         else if(starting) start = timeToday(starting,location.timeZone).time
         s = getSunriseAndSunset(zipCode: zipCode, sunriseOffset: endSunriseOffset, sunsetOffset: endSunsetOffset)
-        if(endingX == "Sunrise") stop = s.sunrise.time
-        else if(endingX == "Sunset") stop = s.sunset.time
+        if(${params?.modeEnd} == "Sunrise") stop = s.sunrise.time
+        else if(${params?.modeEnd} == "Sunset") stop = s.sunset.time
         else if(ending) stop = timeToday(ending,location.timeZone).time
         result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
     }
@@ -223,7 +201,7 @@ private hhmm(time, fmt = "h:mm a") {
 }
 
 private hideOptionsSection() {
-    (starting || ending || days || modes || startingX || endingX || disabled) ? false : true
+    (starting || ending || days || modes || ${params?.modeStart} || ${params?.modeEnd} || disabled) ? false : true
 }
 
 private statusLabel() {
@@ -238,13 +216,13 @@ private offset(value) {
 
 private timeIntervalLabel() {
     def result = ""
-    if (startingX == "Sunrise" && endingX == "Sunrise") result = "Sunrise" + offset(startSunriseOffset) + " to Sunrise" + offset(endSunriseOffset)
-    else if (startingX == "Sunrise" && endingX == "Sunset") result = "Sunrise" + offset(startSunriseOffset) + " to Sunset" + offset(endSunsetOffset)
-    else if (startingX == "Sunset" && endingX == "Sunrise") result = "Sunset" + offset(startSunsetOffset) + " to Sunrise" + offset(endSunriseOffset)
-    else if (startingX == "Sunset" && endingX == "Sunset") result = "Sunset" + offset(startSunsetOffset) + " to Sunset" + offset(endSunsetOffset)
-    else if (startingX == "Sunrise" && ending) result = "Sunrise" + offset(startSunriseOffset) + " to " + hhmm(ending, "h:mm a z")
-    else if (startingX == "Sunset" && ending) result = "Sunset" + offset(startSunsetOffset) + " to " + hhmm(ending, "h:mm a z")
-    else if (starting && endingX == "Sunrise") result = hhmm(starting) + " to Sunrise" + offset(endSunriseOffset)
-    else if (starting && endingX == "Sunset") result = hhmm(starting) + " to Sunset" + offset(endSunsetOffset)
+    if (${params?.modeStart} == "Sunrise" && ${params?.modeEnd} == "Sunrise") result = "Sunrise" + offset(startSunriseOffset) + " to Sunrise" + offset(endSunriseOffset)
+    else if (${params?.modeStart} == "Sunrise" && ${params?.modeEnd} == "Sunset") result = "Sunrise" + offset(startSunriseOffset) + " to Sunset" + offset(endSunsetOffset)
+    else if (${params?.modeStart} == "Sunset" && ${params?.modeEnd} == "Sunrise") result = "Sunset" + offset(startSunsetOffset) + " to Sunrise" + offset(endSunriseOffset)
+    else if (${params?.modeStart} == "Sunset" && ${params?.modeEnd} == "Sunset") result = "Sunset" + offset(startSunsetOffset) + " to Sunset" + offset(endSunsetOffset)
+    else if (${params?.modeStart} == "Sunrise" && ending) result = "Sunrise" + offset(startSunriseOffset) + " to " + hhmm(ending, "h:mm a z")
+    else if (${params?.modeStart} == "Sunset" && ending) result = "Sunset" + offset(startSunsetOffset) + " to " + hhmm(ending, "h:mm a z")
+    else if (starting && ${params?.modeEnd} == "Sunrise") result = hhmm(starting) + " to Sunrise" + offset(endSunriseOffset)
+    else if (starting && ${params?.modeEnd} == "Sunset") result = hhmm(starting) + " to Sunset" + offset(endSunsetOffset)
     else if (starting && ending) result = hhmm(starting) + " to " + hhmm(ending, "h:mm a z")
 }
