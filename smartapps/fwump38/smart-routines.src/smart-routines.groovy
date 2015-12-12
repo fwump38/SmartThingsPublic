@@ -46,7 +46,7 @@ def selectRoutines() {
                 href "setModeStatus", params: hrefParams, title: "Set Status for $m", description: statusLabelValue$m ?: "Tap to set", state: statusLabelValue$m ? "complete" : null}
             else sortModes = sortModes.sort()
             sortModes.each {setModeRoutine(it, "routine$it")}
-            sortModes.each {def statusLabelValue$it = statusLabel(m, "status$m")
+            sortModes.each {def statusLabelValue$it = statusLabel(it, "status$it")
                 def hrefParams = [thisMode: it, modeStatus: "status$it"]
                 href "setModeStatus", params: hrefParams, title: "Set Status for $it", description: statusLabelValue$it ?: "Tap to set", state: statusLabelValue$it ? "complete" : null}
         }
