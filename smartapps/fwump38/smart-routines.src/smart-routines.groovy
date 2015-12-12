@@ -59,7 +59,7 @@ def setModeRoutine(thisMode, modeRoutine) {
 }
 
 def setModeStatus(thisMode, modeStatus) {
-    def result = input modeStatus, type: "bool", title: "Status for $thisMode (ON=Home OFF=Away)", required: true, defaultValue: true 
+    def result = input modeStatus, type: "enum", title: "Status for $thisMode", required: true, options: ["Home", "Away"], defaultValue: "Home", submitOnChange: true
 }
 
 def selectTimes() {
