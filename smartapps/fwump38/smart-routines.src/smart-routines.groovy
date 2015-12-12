@@ -173,19 +173,19 @@ private getDaysOk() {
 private getTimeOk() {
     def result = true
     if ((starting && ending) ||
-    (starting && ${params?.modeEnd} in ["Sunrise", "Sunset"]) ||
-    (${params?.modeStart} in ["Sunrise", "Sunset"] && ending) ||
-    (${params?.modeStart} in ["Sunrise", "Sunset"] && ${params?.modeEnd} in ["Sunrise", "Sunset"])) {
+    (starting && modeEnd in ["Sunrise", "Sunset"]) ||
+    (modeStart in ["Sunrise", "Sunset"] && ending) ||
+    (modeStart in ["Sunrise", "Sunset"] && modeEnd in ["Sunrise", "Sunset"])) {
         def currTime = now()
         def start = null
         def stop = null
         def s = getSunriseAndSunset(zipCode: zipCode, sunriseOffset: startSunriseOffset, sunsetOffset: startSunsetOffset)
-        if(${params?.modeStart} == "Sunrise") start = s.sunrise.time
-        else if(${params?.modeStart} == "Sunset") start = s.sunset.time
+        if(modeStart == "Sunrise") start = s.sunrise.time
+        else if(modeStart == "Sunset") start = s.sunset.time
         else if(starting) start = timeToday(starting,location.timeZone).time
         s = getSunriseAndSunset(zipCode: zipCode, sunriseOffset: endSunriseOffset, sunsetOffset: endSunsetOffset)
-        if(${params?.modeEnd} == "Sunrise") stop = s.sunrise.time
-        else if(${params?.modeEnd} == "Sunset") stop = s.sunset.time
+        if(modeEnd == "Sunrise") stop = s.sunrise.time
+        else if(modeEnd == "Sunset") stop = s.sunset.time
         else if(ending) stop = timeToday(ending,location.timeZone).time
         result = start < stop ? currTime >= start && currTime <= stop : currTime <= stop || currTime >= start
     }
@@ -201,7 +201,7 @@ private hhmm(time, fmt = "h:mm a") {
 }
 
 private hideOptionsSection() {
-    (starting || ending || days || modes || ${params?.modeStart} || ${params?.modeEnd} || disabled) ? false : true
+    (starting || ending || days || modes || modeStart || modeEnd || disabled) ? false : true
 }
 
 private statusLabel(modeVar, modeStatus) {
