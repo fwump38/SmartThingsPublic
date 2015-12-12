@@ -27,7 +27,8 @@ preferences {
     page(name: "selectRoutines")
     page(name: "selectTimes")
     page(name: "selectPeople")
-    page(name: "modeTime")
+    page(name: "modeTimeRange")
+    page(name: "setModeStatus")
 }
 
 def selectRoutines() {
@@ -40,10 +41,12 @@ def selectRoutines() {
             input "modesX", "enum", multiple: true, title: "Select mode(s)", submitOnChange: true, options: myModes.sort(), defaultValue: [m]
             def sortModes = modesX
             if(!sortModes) setModeRoutine(m, "routine$m")
-            if(!sortModes) setModeStatus(m, "routine$m")
+            if(!sortModes) {def hrefParams = [thisMode: m, modeStatus: "status$m"]
+                href "setModeStatus", params: hrefParams, title: "Set Status $m"}
             else sortModes = sortModes.sort()
             sortModes.each {setModeRoutine(it, "routine$it")}
-            sortModes.each {setModeStatus(it, "routine$it")}
+            sortModes.each {def hrefParams = [thisMode: it, modeStatus: "status$it"]
+                href "setModeStatus", params: hrefParams, title: "Set Status $it"}
         }
     }
 }
@@ -58,8 +61,12 @@ def setModeRoutine(thisMode, modeRoutine) {
     def result = input modeRoutine, "enum", multiple: false, title: "Routine for $thisMode", required: true, options: actions
 }
 
-def setModeStatus(thisMode, modeStatus) {
-    def result = input modeStatus, type: "enum", title: "Status for $thisMode", required: true, options: ["Home", "Away"], defaultValue: "Home", submitOnChange: true
+def setModeStatus(params) {
+    dynamicPage(name:"setModeStatus",title: "Set a status for ${params?.thisMode}", uninstall: false) {
+        section() {
+            input "modeHomeAway", "enum", title: "Should ${params?.thisMode} be considered as", options: ["Home", "Away"], defaultValue: "Home", submitOnChange: true
+        }
+    }
 }
 
 def selectTimes() {
@@ -71,32 +78,39 @@ def selectTimes() {
             location.modes.each {myModes << "$it"}
             input "modesX", "enum", multiple: true, title: "Select mode(s)", submitOnChange: true, options: myModes.sort(), defaultValue: [m]
             def sortModes = modesX
-            if(!sortModes) setModeStart(m, "modeStart$m")
-            if(!sortModes) setModeEnd(m, "modeEnd$m")
+            if(!sortModes) {def timeLabel = timeIntervalLabel()
+                def hrefParams = [thisMode: m, modeTime: "modeTime$m"]
+                href "modeTimeRange", params: hrefParams, title: "Set a time range for $m", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null}
             else sortModes = sortModes.sort()
-            sortModes.each {setModeStart(it, "modeStart$it")}
-            sortModes.each {setModeEnd(it, "modeEnd$it")}
+            sortModes.each {
+                def timeLabel = timeIntervalLabel()
+                def hrefParams = [thisMode: it, modeTime: "modeTime$it"]
+                href "modeTimeRange", params: hrefParams, title: "Set a time range for $it", description: timeLabel ?: "Tap to set", state: timeLabel ? "complete" : null}
         }
 
     }
 }
 
-def setModeStart(thisMode, startingX) {
-    def result = input startingX, "enum", title: "Starting at", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
+def modeTimeRange(params) {
+    dynamicPage(name:"modeTimeRange",title: "Set a start time for ${params?.thisMode}", uninstall: false) {
+        section() {
+            input "startingX", "enum", title: "Starting at", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
             if(startingX in [null, "A specific time"]) input "starting", "time", title: "Start time", required: false
             else {
                 if(startingX == "Sunrise") input "startSunriseOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
                 else if(startingX == "Sunset") input "startSunsetOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
             }
-}
-
-def setModeEnd(thisMode, endingX) {
-    def result = input "endingX", "enum", title: "Ending at", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
+        }
+        
+        section() {
+            input "endingX", "enum", title: "Set an end time for ${params?.thisMode}", options: ["A specific time", "Sunrise", "Sunset"], defaultValue: "A specific time", submitOnChange: true
             if(endingX in [null, "A specific time"]) input "ending", "time", title: "End time", required: false
             else {
                 if(endingX == "Sunrise") input "endSunriseOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
                 else if(endingX == "Sunset") input "endSunsetOffset", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
             }
+        }
+    }
 }
 
 def selectPeople() {
