@@ -206,7 +206,7 @@ private hideOptionsSection() {
 
 private statusLabel() {
     def result = ""
-    if (modeHomeAway == "Home") result = "Home"
+    if (${params?.modeStatus} == "Home") result = "Home"
     else result = "Away"
 }
 
