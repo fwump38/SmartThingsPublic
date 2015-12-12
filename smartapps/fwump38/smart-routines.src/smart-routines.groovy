@@ -41,12 +41,12 @@ def selectRoutines() {
             input "modesX", "enum", multiple: true, title: "Select mode(s)", submitOnChange: true, options: myModes.sort(), defaultValue: [m]
             def sortModes = modesX
             if(!sortModes) setModeRoutine(m, "routine$m")
-            if(!sortModes) {def statusLabelValue$m = statusLabel()
+            if(!sortModes) {def statusLabelValue$m = statusLabel(m, "status$m")
                 def hrefParams = [thisMode: m, modeStatus: "status$m"]
                 href "setModeStatus", params: hrefParams, title: "Set Status for $m", description: statusLabelValue$m ?: "Tap to set", state: statusLabelValue$m ? "complete" : null}
             else sortModes = sortModes.sort()
             sortModes.each {setModeRoutine(it, "routine$it")}
-            sortModes.each {def statusLabelValue$it = statusLabel()
+            sortModes.each {def statusLabelValue$it = statusLabel(m, "status$m")
                 def hrefParams = [thisMode: it, modeStatus: "status$it"]
                 href "setModeStatus", params: hrefParams, title: "Set Status for $it", description: statusLabelValue$it ?: "Tap to set", state: statusLabelValue$it ? "complete" : null}
         }
@@ -80,12 +80,12 @@ def selectTimes() {
             location.modes.each {myModes << "$it"}
             input "modesX", "enum", multiple: true, title: "Select mode(s)", submitOnChange: true, options: myModes.sort(), defaultValue: [m]
             def sortModes = modesX
-            if(!sortModes) {def timeLabel$m = timeIntervalLabel()
+            if(!sortModes) {def timeLabel$m = timeIntervalLabel(m, "modeStart$m", "modeEnd$m")
                 def hrefParams = [thisMode: m, modeStart: "modeStart$m", modeEnd: "modeEnd$m"]
                 href "modeTimeRange", params: hrefParams, title: "Set a time range for $m", description: timeLabel$m ?: "Tap to set", state: timeLabel$m ? "complete" : null}
             else sortModes = sortModes.sort()
             sortModes.each {
-                def timeLabel$it = timeIntervalLabel()
+                def timeLabel$it = timeIntervalLabel(it, "modeStart$it", "modeEnd$it")
                 def hrefParams = [thisMode: it, modeStart: "modeStart$it", modeEnd: "modeEnd$it"]
                 href "modeTimeRange", params: hrefParams, title: "Set a time range for $it", description: timeLabel$it ?: "Tap to set", state: timeLabel$it ? "complete" : null}
         }
@@ -204,25 +204,25 @@ private hideOptionsSection() {
     (starting || ending || days || modes || ${params?.modeStart} || ${params?.modeEnd} || disabled) ? false : true
 }
 
-private statusLabel() {
+private statusLabel(modeVar, modeStatus) {
     def result = ""
-    if (${params?.modeStatus} == "Home") result = "Home"
-    else if (${params?.modeStatus} == "Away") result = "Away"
+    if (modeStatus == "Home") result = "Home"
+    else if (modeStatus == "Away") result = "Away"
 }
 
 private offset(value) {
     def result = value ? ((value > 0 ? "+" : "") + value + " min") : ""
 }
 
-private timeIntervalLabel() {
+private timeIntervalLabel(modeVar, modeStart, modeEnd) {
     def result = ""
-    if (${params?.modeStart} == "Sunrise" && ${params?.modeEnd} == "Sunrise") result = "Sunrise" + offset(startSunriseOffset) + " to Sunrise" + offset(endSunriseOffset)
-    else if (${params?.modeStart} == "Sunrise" && ${params?.modeEnd} == "Sunset") result = "Sunrise" + offset(startSunriseOffset) + " to Sunset" + offset(endSunsetOffset)
-    else if (${params?.modeStart} == "Sunset" && ${params?.modeEnd} == "Sunrise") result = "Sunset" + offset(startSunsetOffset) + " to Sunrise" + offset(endSunriseOffset)
-    else if (${params?.modeStart} == "Sunset" && ${params?.modeEnd} == "Sunset") result = "Sunset" + offset(startSunsetOffset) + " to Sunset" + offset(endSunsetOffset)
-    else if (${params?.modeStart} == "Sunrise" && ending) result = "Sunrise" + offset(startSunriseOffset) + " to " + hhmm(ending, "h:mm a z")
-    else if (${params?.modeStart} == "Sunset" && ending) result = "Sunset" + offset(startSunsetOffset) + " to " + hhmm(ending, "h:mm a z")
-    else if (starting && ${params?.modeEnd} == "Sunrise") result = hhmm(starting) + " to Sunrise" + offset(endSunriseOffset)
-    else if (starting && ${params?.modeEnd} == "Sunset") result = hhmm(starting) + " to Sunset" + offset(endSunsetOffset)
+    if (modeStart == "Sunrise" && modeEnd == "Sunrise") result = "Sunrise" + offset(startSunriseOffset) + " to Sunrise" + offset(endSunriseOffset)
+    else if (modeStart == "Sunrise" && modeEnd == "Sunset") result = "Sunrise" + offset(startSunriseOffset) + " to Sunset" + offset(endSunsetOffset)
+    else if (modeStart == "Sunset" && modeEnd == "Sunrise") result = "Sunset" + offset(startSunsetOffset) + " to Sunrise" + offset(endSunriseOffset)
+    else if (modeStart == "Sunset" && modeEnd == "Sunset") result = "Sunset" + offset(startSunsetOffset) + " to Sunset" + offset(endSunsetOffset)
+    else if (modeStart == "Sunrise" && ending) result = "Sunrise" + offset(startSunriseOffset) + " to " + hhmm(ending, "h:mm a z")
+    else if (modeStart == "Sunset" && ending) result = "Sunset" + offset(startSunsetOffset) + " to " + hhmm(ending, "h:mm a z")
+    else if (starting && modeEnd == "Sunrise") result = hhmm(starting) + " to Sunrise" + offset(endSunriseOffset)
+    else if (starting && modeEnd == "Sunset") result = hhmm(starting) + " to Sunset" + offset(endSunsetOffset)
     else if (starting && ending) result = hhmm(starting) + " to " + hhmm(ending, "h:mm a z")
 }
