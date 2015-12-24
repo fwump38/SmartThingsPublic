@@ -66,21 +66,20 @@ def selectSettings() {
             state.modesX.each{input "status$it", "enum", multiple: false, title: "Select Home/Away status for $it", submitOnChange: true, required: true, options: ["Home", "Away"]}
         }
         section("Choose when each mode should start") {
-            state.modesX.each{input "startingX$it", "enum", title: "Start for $it", options: ["A specific time", "Sunrise", "Sunset"], required: true, defaultValue: "A specific time", submitOnChange: true
-                if("startingX$it" in [null, "A specific time"]) input "starting$it", "time", title: "Start time", required: false
+            state.modesX.each{input "startingX$it", "enum", title: "Start for $it", options: ["A specific time", "Sunrise", "Sunset"], required: true, defaultValue: "A specific time", submitOnChange: true  
+                if(settings."startingX$it" in [null, "A specific time"]) input "starting$it", "time", title: "Start time for $it", required: false
                 else {
-                    if("startingX$it" == "Sunrise") input "startSunriseOffset$it", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
-                    else if("startingX$it" == "Sunset") input "startSunriseOffset$it", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
+                    if(settings."startingX$it" == "Sunrise") input "startSunriseOffset$it", "number", range: "*..*", title: "Offset in minutes (+/-) for $it", required: false
+                    else if(settings."startingX$it" == "Sunset") input "startSunriseOffset$it", "number", range: "*..*", title: "Offset in minutes (+/-) for $it", required: false
                 }
             }
         }
         section("Choose when each mode should end") {
             state.modesX.each{input "endingX$it", "enum", title: "Ending for $it", options: ["A specific time", "Sunrise", "Sunset"], required: true, defaultValue: "A specific time", submitOnChange: true
-                log.debug "endingX = endingX$it"
-                if("endingX$it" in [null, "A specific time"]) input "ending$it", "time", title: "End time", required: false
+                if(settings."endingX$it" in [null, "A specific time"]) input "ending$it", "time", title: "End time for $it", required: false
                 else {
-                    if("endingX$it" == "Sunrise") input "endSunriseOffset$it", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
-                    else if("endingX$it" == "Sunset") input "endSunsetOffset$it", "number", range: "*..*", title: "Offset in minutes (+/-)", required: false
+                    if(settings."endingX$it" == "Sunrise") input "endSunriseOffset$it", "number", range: "*..*", title: "Offset in minutes (+/-) for $it", required: false
+                    else if(settings."endingX$it" == "Sunset") input "endSunsetOffset$it", "number", range: "*..*", title: "Offset in minutes (+/-) for $it", required: false
                 }
             }
         }
