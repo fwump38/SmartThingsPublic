@@ -92,12 +92,11 @@ def selectPeople() {
 
         section("Change Home Modes According To Schedule") {
             input "peopleHome", "capability.presenceSensor", multiple: true, title: "If any of these people are home...", required: true
-            input "falseAlarmThresholdHome", "decimal", title: "Number of minutes", required: false, defaultValue: 10
             paragraph "If any of these people are home, the home mode(s) will change according to the home schedule."
         }
         section("Change Away Modes According To Schedule") {
             input "peopleAway", "capability.presenceSensor", multiple: true, title: "If all of these people are away...", required: true
-            input "falseAlarmThresholdAway", "decimal", title: "Number of minutes", required: false, defaultValue: 10
+            input "falseAlarmThreshold", "decimal", title: "Number of minutes", required: false, defaultValue: 10
             paragraph "If all of these people leave, the away mode(s) will change according to the away schedule."
         }
     }
@@ -116,4 +115,138 @@ def updated() {
 
 def initialize() {
     state.currentMode = location.mode in modesX ? location.mode : modesX[0]
+    state.clear()
+    subscribe(people, "presence", presence)
+    runIn(60, checkSun)
+    subscribe(location, "sunrise", setSunrise)
+    subscribe(location, "sunset", setSunset)
+}
+
+//check current sun state when installed.
+def checkSun() {
+  def zip     = settings.zip as String
+  def sunInfo = getSunriseAndSunset(zipCode: zip)
+ def current = now()
+
+if (sunInfo.sunrise.time < current && sunInfo.sunset.time > current) {
+    state.sunMode = "sunrise"
+   setSunrise()
+  }
+  
+else {
+   state.sunMode = "sunset"
+    setSunset()
+  }
+}
+
+//change to sunrise mode on sunrise event
+def setSunrise(evt) {
+  state.sunMode = "sunrise";
+  changeSunMode(newMode);
+}
+
+//change to sunset mode on sunset event
+def setSunset(evt) {
+  state.sunMode = "sunset";
+  changeSunMode(newMode)
+}
+
+//presence change run logic based on presence state of home
+def presence(evt) {
+  if(evt.value == "not present") {
+    log.debug("Checking if everyone is away")
+
+    if(everyoneIsAway()) {
+      log.info("Nobody is home, running away sequence")
+      def delay = (falseAlarmThreshold != null && falseAlarmThreshold != "") ? falseAlarmThreshold * 60 : 10 * 60 
+      runIn(delay, "setAway")
+    }
+  }
+
+else {
+    def lastTime = state[evt.deviceId]
+    if (lastTime == null || now() - lastTime >= 1 * 60000) {
+        log.info("Someone is home, running home sequence")
+        setHome()
+    }    
+    state[evt.deviceId] = now()
+
+  }
+}
+
+//if empty set home to one of the away modes
+//needs work
+def setAway() {
+  if(everyoneIsAway()) {
+    if(state.sunMode == "sunset") {
+      def message = "Performing \"${awayNight}\" for you as requested."
+      log.info(message)
+      sendAway(message)
+      location.helloHome.execute(settings.awayNight)
+    }
+    
+    else if(state.sunMode == "sunrise") {
+      def message = "Performing \"${awayDay}\" for you as requested."
+      log.info(message)
+      sendAway(message)
+      location.helloHome.execute(settings.awayDay)
+      }
+    else {
+      log.debug("Mode is the same, not evaluating")
+    }
+  }
+
+  else {
+    log.info("Somebody returned home before we set to '${newAwayMode}'")
+  }
+}
+    
+//set home mode when house is occupied
+//needs work
+def setHome() {
+log.info("Setting Home Mode!!")
+if(anyoneIsHome()) {
+      if(state.sunMode == "sunset"){
+      if (location.mode != "${homeModeNight}"){
+      def message = "Performing \"${homeNight}\" for you as requested."
+        log.info(message)
+        sendHome(message)
+        location.helloHome.execute(settings.homeNight)
+        }
+       }
+       
+      if(state.sunMode == "sunrise"){
+      if (location.mode != "${homeModeDay}"){
+      def message = "Performing \"${homeDay}\" for you as requested."
+        log.info(message)
+        sendHome(message)
+        location.helloHome.execute(settings.homeDay)
+            }
+      }      
+    }
+    
+}
+
+private everyoneIsAway() {
+  def result = true
+
+  if(people.findAll { it?.currentPresence == "present" }) {
+    result = false
+  }
+
+  log.debug("everyoneIsAway: ${result}")
+
+  return result
+}
+
+private anyoneIsHome() {
+  def result = false
+
+  if(people.findAll { it?.currentPresence == "present" }) {
+    result = true
+  }
+
+  log.debug("anyoneIsHome: ${result}")
+
+  return result
 }

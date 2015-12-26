@@ -25,59 +25,66 @@ definition(
 
 
 preferences {
-	section("Turn on when there's movement..."){
-		input "motions", "capability.motionSensor", multiple: true, title: "Select motion detectors", required: false
-	}
-	section("Or, turn on when one of these contacts opened"){
-		input "contacts", "capability.contactSensor", multiple: true, title: "Select Contacts", required: false
-	}
-	section("And off after no more triggers after..."){
-		input "minutes1", "number", title: "Minutes?", defaultValue: "5"
-	}
-	section("Turn on/off light(s)..."){
-		input "switches", "capability.switch", multiple: true, title: "Select Lights"
-	}
-    section("And Optionally Don't Trigger If This Switch Is On..."){
-        input "otherSwitch", "capability.switch", multiple: true, title: "Select Switch"
+    section("Turn on when one of these doors opens"){
+        input "contactsX", "capability.contactSensor", multiple: true, title: "Select Doors", required: false
+    }
+    section("And off after..."){
+        input "minutesX", "number", title: "Minutes?", defaultValue: "5"
+    }
+    section("Turn on/off light(s)..."){
+        input "switchesX", "capability.switch", multiple: true, title: "Select Lights"
+    }
+    section("And Optionally Don't Trigger If Any of These Switches Are On..."){
+        input "otherSwitches", "capability.switch", multiple: true, title: "Select Switch(es)"
     }
 }
 
 def installed() {
-	initialize()
+    initialize()
 }
 
 def updated() {
-	unsubscribe()
-	unschedule()
-	initialize()
+    unsubscribe()
+    unschedule()
+    initialize()
 }
 
 def initialize() {
 
-	subscribe(switches, "switch", switchChange)
-	subscribe(motions, "motion", motionHandler)
-	subscribe(contacts, "contact", contactHandler)
-    subscribe(otherSwitch, "switch", statusChange)
+    subscribe(switchesX, "switch", switchChange)
+    subscribe(contactsX, "contact", contactHandler)
+    subscribe(otherSwitches, "switch", statusChange)
+    state.otherSwitches = otherSwitchState()
     schedule("0 * * * * ?", "scheduleCheck")
     state.myState = "ready"
     log.debug "state: " + state.myState
 }
 
 def statusChange(evt) {
-	log.debug "statusChange: $evt.name: $evt.value"
+    log.debug "statusChange: $evt.name: $evt.value"
     
     if(evt.value == "on") {
-    	state.myOtherState = "on"
-        log.debug "myOtherstate: " + state.myState
+        state.otherSwitches = otherSwitchState()
+        log.debug "otherSwitches: ${state.otherSwitches}"
     }
     else {
-    	state.myOtherState = "off"
-        log.debug "myOtherstate: " + state.myState
+        state.otherSwitches = otherSwitchState()
+        log.debug "otherSwitches: ${state.otherSwitches}"
+    }
+}
+
+def otherSwitchState() {
+    def otherOn = otherSwitches.findAll { it?.latestValue("switch") == "on" }
+    if (otherOn.size>0) {
+        return "on"
+    }
+    else {
+        return "off"
     }
 }
 
 def switchChange(evt) {
-	log.debug "SwitchChange: $evt.name: $evt.value"
+    log.debug "SwitchChange: $evt.name: $evt.value"
     
     if(evt.value == "on") {
         // Slight change of Race condition between motion or contact turning the switch on,
@@ -87,53 +94,34 @@ def switchChange(evt) {
             // OK, probably an event from Activating something, and not the switch itself. Go to Active mode.
             state.myState = "active"
         } else if(state.myState != "active") {
-    		state.myState = "already on"
+            state.myState = "already on"
         }
     } else {
-    	// If active and switch is turned off manually, then stop the schedule and go to ready state
-    	if(state.myState == "active" || state.myState == "activating") {
-    		unschedule()
+        // If active and switch is turned off manually, then stop the schedule and go to ready state
+        if(state.myState == "active" || state.myState == "activating") {
+            unschedule()
         }
-  		state.myState = "ready"
+        state.myState = "ready"
     }
     log.debug "state: " + state.myState
 }
 
 def contactHandler(evt) {
-	log.debug "contactHandler: $evt.name: $evt.value"
+    log.debug "contactHandler: $evt.name: $evt.value"
     
     if (evt.value == "open") {
-    	if (state.myOtherState == "off") {
-        	if (state.myState == "ready") {
-            	log.debug "Turning on lights by contact opening"
-            	switches.on()
-            	state.inactiveAt = null
-            	state.myState = "activating"
-        	}
+        if (state.otherSwitches == "off") {
+            if (state.myState == "ready") {
+                log.debug "Turning on lights by contact opening"
+                switches.on()
+                state.inactiveAt = null
+                state.myState = "activating"
+            }
         }
     } else if (evt.value == "closed") {
         if (!state.inactiveAt && state.myState == "active" || state.myState == "activating") {
-			// When contact closes, we reset the timer if not already set
+            // When contact closes, we reset the timer if not already set
             setActiveAndSchedule()
-        }
-    }
-    log.debug "state: " + state.myState
-}
-
-def motionHandler(evt) {
-	log.debug "motionHandler: $evt.name: $evt.value"
-
-    if (evt.value == "active") {
-        if(state.myState == "ready" || state.myState == "active" || state.myState == "activating" ) {
-            log.debug "turning on lights"
-            switches.on()
-            state.inactiveAt = null
-            state.myState = "activating"
-        }
-    } else if (evt.value == "inactive") {
-        if (!state.inactiveAt && state.myState == "active" || state.myState == "activating") {
-			// When Motion ends, we reset the timer if not already set
-           setActiveAndSchedule()
         }
     }
     log.debug "state: " + state.myState
@@ -141,27 +129,28 @@ def motionHandler(evt) {
 
 def setActiveAndSchedule() {
     unschedule()
- 	state.myState = "active"
+    state.myState = "active"
     state.inactiveAt = now()
-	schedule("0 * * * * ?", "scheduleCheck")
+    schedule("0 * * * * ?", "scheduleCheck")
 }
 
 def scheduleCheck() {
-	log.debug "schedule check, ts = ${state.inactiveAt}"
+    log.debug "schedule check, ts = ${state.inactiveAt}"
     if(state.myState != "already on") {
-    	if(state.inactiveAt != null) {
-	        def elapsed = now() - state.inactiveAt
+        if(state.inactiveAt != null) {
+            def elapsed = now() - state.inactiveAt
             log.debug "${elapsed / 1000} sec since motion stopped"
-	        def threshold = 1000 * 60 * minutes1
-	        if (elapsed >= threshold) {
-	            if (state.myState == "active") {
-	                log.debug "turning off lights"
-	                switches.off()
-	            }
-	            state.inactiveAt = null
-	            state.myState = "ready"
-	        }
-    	}
+            def threshold = 1000 * 60 * minutes1
+            if (elapsed >= threshold) {
+                if (state.myState == "active") {
+                    log.debug "turning off lights"
+                    switches.off()
+                }
+                state.inactiveAt = null
+                state.myState = "ready"
+            }
+        }
     }
     log.debug "state: " + state.myState
 }
+
