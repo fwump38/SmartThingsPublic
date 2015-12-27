@@ -113,7 +113,7 @@ def contactHandler(evt) {
         if (state.otherSwitches == "off") {
             if (state.myState == "ready") {
                 log.debug "Turning on lights by contact opening"
-                switches.on()
+                switchesX.on()
                 state.inactiveAt = null
                 state.myState = "activating"
             }
@@ -144,7 +144,7 @@ def scheduleCheck() {
             if (elapsed >= threshold) {
                 if (state.myState == "active") {
                     log.debug "turning off lights"
-                    switches.off()
+                    switchesX.off()
                 }
                 state.inactiveAt = null
                 state.myState = "ready"
@@ -153,4 +153,3 @@ def scheduleCheck() {
     }
     log.debug "state: " + state.myState
 }
-
